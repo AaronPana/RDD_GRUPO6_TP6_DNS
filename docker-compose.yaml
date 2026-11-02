@@ -1,0 +1,65 @@
+# Laboratorio DNS - Grupo 6
+# Servidor DNS primario (ns1) y secundario (ns2) con BIND9, autoritativos para grupo6.lab.
+# Clientes: un contenedor Linux y el host Windows (a través de los puertos publicados).
+
+services:
+  # ---------- Servidor DNS primario (ns1) ----------
+  dns:
+    image: internetsystemsconsortium/bind9:9.20 # Imagen oficial de ISC (creadores de BIND)
+    container_name: dns-grupo6
+    # -g: primer plano y log por salida estándar (visible con "docker compose logs dns")
+    command: ["-g", "-c", "/etc/bind/named.conf"]
+    volumes:
+      # Archivos montados en solo lectura (:ro)
+      - ./bind/named.conf:/etc/bind/named.conf:ro # Configuración del primario
+      - ./bind/db.lab:/etc/bind/db.lab:ro # Zona directa grupo6.lab
+      - ./bind/db.172.30.6:/etc/bind/db.172.30.6:ro # Zona inversa 172.30.6.0/24
+      - ./bind/tsig.key:/etc/bind/tsig.key:ro # Clave TSIG compartida con ns2
+    ports:
+      # Puerto 53 (DNS) publicado solo en el host (127.0.0.1), no en la red local.
+      # UDP: consultas normales. TCP: respuestas grandes y transferencias de zona.
+      - "127.0.0.1:53:53/udp"
+      - "127.0.0.1:53:53/tcp"
+    networks:
+      lab:
+        ipv4_address: 172.30.6.10 # IP fija: los clientes la configuran como su DNS
+
+  # ---------- Servidor DNS secundario (ns2) ----------
+  dns2:
+    image: internetsystemsconsortium/bind9:9.20
+    container_name: dns2-grupo6
+    command: ["-g", "-c", "/etc/bind/named.conf"]
+    volumes:
+      # Solo lleva su configuración y la clave: las zonas las copia del primario
+      - ./bind/named-secundario.conf:/etc/bind/named.conf:ro
+      - ./bind/tsig.key:/etc/bind/tsig.key:ro # Clave TSIG compartida con ns1
+    ports:
+      # El 53 del host ya lo usa ns1, así que ns2 se publica en el 5300 del host
+      - "127.0.0.1:5300:53/udp"
+      - "127.0.0.1:5300:53/tcp"
+    depends_on:
+      - dns # Arranca después del primario
+    networks:
+      lab:
+        ipv4_address: 172.30.6.11
+
+  # ---------- Cliente Linux ----------
+  cliente:
+    build: ./client # Imagen propia con dig y nslookup
+    container_name: cliente-grupo6
+    dns: # Servidores DNS en orden: si ns1 no responde, usa ns2
+      - 172.30.6.10
+      - 172.30.6.11
+    depends_on:
+      - dns
+      - dns2
+    networks:
+      lab:
+        ipv4_address: 172.30.6.20
+
+# ---------- Red del laboratorio ----------
+networks:
+  lab:
+    ipam:
+      config:
+        - subnet: 172.30.6.0/24 # Red privada propia (6 = grupo 6)

@@ -1,0 +1,31 @@
+; Zona directa grupo6.lab (archivo del PRIMARIO; el secundario la copia)
+; Formato de cada registro: nombre  [TTL]  clase  tipo  valor
+; "@" representa al dominio mismo (grupo6.lab)
+; Los nombres que terminan en "." son completos; los que no, se completan con grupo6.lab
+
+$TTL 3600                              ; Tiempo en caché por defecto (1 hora)
+
+; SOA: datos de la zona (servidor primario y mail del responsable: admin@grupo6.lab)
+@       IN  SOA  ns1.grupo6.lab. admin.grupo6.lab. (
+                 2026110201 ; serial: versión de la zona (AAAAMMDDnn). Subir en cada cambio
+                 3600       ; refresh: cada cuánto el secundario revisa si hubo cambios
+                 900        ; retry: reintento si el refresh falla
+                 604800     ; expire: el secundario deja de responder si no contacta al primario
+                 300 )      ; TTL negativo: cuánto se cachea un "no existe"
+
+; NS: servidores autorizados del dominio (primario y secundario)
+@       IN  NS     ns1.grupo6.lab.
+@       IN  NS     ns2.grupo6.lab.
+
+; MX: servidor de correo del dominio (10 = prioridad, menor número = preferido)
+@       IN  MX 10  mail.grupo6.lab.
+
+; A: nombre -> IPv4
+ns1     IN  A      172.30.6.10         ; Servidor DNS primario
+ns2     IN  A      172.30.6.11         ; Servidor DNS secundario
+www     IN  A      172.30.6.10         ; Nombre de ejemplo para un servidor web
+mail    IN  A      172.30.6.10         ; Nombre del servidor de correo (solo el registro, no hay servicio)
+cliente IN  A      172.30.6.20         ; Contenedor cliente
+
+; CNAME: alias de otro nombre
+web     IN  CNAME  www                 ; web.grupo6.lab es otro nombre para www.grupo6.lab

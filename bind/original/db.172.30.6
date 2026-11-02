@@ -1,0 +1,19 @@
+; Zona inversa para la red 172.30.6.0/24 (archivo del PRIMARIO; el secundario la copia)
+; Cada registro PTR asocia el último octeto de la IP con un nombre
+
+$TTL 3600
+
+@       IN  SOA  ns1.grupo6.lab. admin.grupo6.lab. (
+                 2026110201 ; serial
+                 3600       ; refresh
+                 900        ; retry
+                 604800     ; expire
+                 300 )      ; TTL negativo
+
+@       IN  NS   ns1.grupo6.lab.
+@       IN  NS   ns2.grupo6.lab.
+
+; PTR: IP -> nombre (10 = 172.30.6.10, etc.)
+10      IN  PTR  ns1.grupo6.lab.
+11      IN  PTR  ns2.grupo6.lab.
+20      IN  PTR  cliente.grupo6.lab.

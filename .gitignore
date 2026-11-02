@@ -1,0 +1,7 @@
+# Clave TSIG: es secreta. Se genera en cada instalación (ver README, sección Uso)
+bind/tsig.key
+
+# Archivos del sistema operativo y del editor
+.vscode/
+Thumbs.db
+.DS_Store
